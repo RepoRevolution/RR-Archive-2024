@@ -1,0 +1,17 @@
+{
+    "Lua.diagnostics.globals": [
+        "lib",
+        "locale",
+        "cache",
+        "ESX",
+        "QB",
+        "QBCore",
+        "MySQL",
+        "shared",
+        "server",
+        "client",
+    ],
+    "cSpell.words": [
+        "pinia"
+    ]
+}

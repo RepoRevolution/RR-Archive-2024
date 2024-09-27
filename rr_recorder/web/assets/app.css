@@ -1,0 +1,35 @@
+/* VARIABLES */
+:root {
+    --primary-text-color: #ffffffff;
+    --secondary-text-color: #ffffff60;
+    --accent-color: #7f2a00ff;
+    --warning-color: #ceb300ff;
+    --danger-color: #850000ff;
+}
+
+/* NORMALIZE */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    overflow: hidden;
+    user-select: none;
+    color: var(--primary-text-color);
+}
+
+/* APP */
+#root {
+    width: 1920px;
+    height: 1080px;
+    position: relative;
+    display: none;
+}
+
+.material-symbols-outlined {
+    color: var(--accent-color);
+    font-variation-settings:
+        'FILL' 0,
+        'wght' 400,
+        'GRAD' 0,
+        'opsz' 24
+}

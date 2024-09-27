@@ -1,0 +1,9 @@
+.replxx_history
+/cache
+/resources/\[\_\_DEV\]/**/
+/resources/\[\_STREAM\]/\[\_CLOTHES\]/**/
+/resources/\[\_STREAM\]/\[\_INTERIORS\]/**/
+!/resources/\[\_STREAM\]/\[\_INTERIORS\]/bob74_ipl
+!/resources/\[\_STREAM\]/\[\_INTERIORS\]/bob74_ipl/**/*
+/resources/\[\_STREAM\]/\[\_VEHICLES\]/**/
+/resources/\[\_SCRIPTS\]/\[ADMIN\]/rr_inflation/data/**.json

@@ -1,0 +1,14 @@
+{
+    "Lua.diagnostics.globals": [
+        "lib",
+        "locale",
+        "cache",
+        "ESX",
+        "QB",
+        "QBCore",
+        "MySQL",
+        "shared",
+        "server",
+        "client",
+    ]
+}
