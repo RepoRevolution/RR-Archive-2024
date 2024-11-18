@@ -1,0 +1,194 @@
+local legacyEvents = {
+    ['esx:playerLoaded'] = false,
+    ['esx:onPlayerLogout'] = false,
+    ['esx:setAccountMoney'] = false,
+    ['esx:addInventoryItem'] = false,
+    ['esx:removeInventoryItem'] = false,
+    ['esx:setMaxWeight'] = false,
+    ['esx:setJob'] = false,
+    ['esx:setWeaponTint'] = false,
+    ['esx:updatePlayerData'] = false,
+    ['esx:createPickup'] = false,
+    ['esx:createMissingPickups'] = false,
+    ['esx:removePickup'] = false,
+    ['esx:registerSuggestions'] = false,
+    ['esx:showNotification'] = true,
+    ['esx:showAdvancedNotification'] = false,
+    ['esx:showHelpNotification'] = false,
+    ['esx:freezePlayer'] = false,
+    ['esx:killPlayer'] = false
+}
+
+do
+    for eventName, networked in pairs(legacyEvents) do
+        if networked then RegisterNetEvent(eventName) end
+    end
+
+    if legacyEvents['esx:updatePlayerData'] then
+        AddEventHandler('esx:setMetadata', function(currentMetadata)
+            TriggerEvent('esx:updatePlayerData', 'metadata', currentMetadata)
+        end)
+    end
+end
+
+ESX.RegisterSafeEvent('esx:playerLoaded', function(value)
+    value.xPlayerClient.ped = PlayerPedId()
+
+    TriggerEvent('esx:playerLoaded', value.xPlayerClient, value.isNew, value.skin)
+end)
+
+ESX.RegisterSafeEvent('esx:onPlayerLogout', function()
+    TriggerEvent('esx:onPlayerLogout')
+end)
+
+ESX.RegisterSafeEvent('esx:setAccountMoney', function(value)
+    TriggerEvent('esx:setAccountMoney', value.account)
+end)
+
+ESX.RegisterSafeEvent('esx:addInventoryItem', function(value)
+    TriggerEvent('esx:addInventoryItem', value.itemName, value.itemCount, value.showNotification)
+end)
+
+ESX.RegisterSafeEvent('esx:removeInventoryItem', function(value)
+    TriggerEvent('esx:removeInventoryItem', value.itemName, value.itemCount)
+end)
+
+ESX.RegisterSafeEvent('esx:setMaxWeight', function(value)
+    TriggerEvent('esx:setMaxWeight', value.maxWeight)
+end)
+
+ESX.RegisterSafeEvent('esx:setWeaponTint', function(value)
+    TriggerEvent('esx:setWeaponTint', value.weaponName, value.weaponTintIndex)
+end)
+
+ESX.RegisterSafeEvent('esx:setMetadata', function(value)
+    TriggerEvent('esx:setMetadata', value.currentMetadata, value.lastMetadata)
+end)
+
+ESX.RegisterSafeEvent('esx:createPickup', function(value)
+    TriggerEvent('esx:createPickup', value.pickupId, value.label, value.coords, value.type, value.name, value.components, value.tintIndex)
+end)
+
+ESX.RegisterSafeEvent('esx:createMissingPickups', function(value)
+    TriggerEvent('esx:createMissingPickups', value.pickups)
+end)
+
+ESX.RegisterSafeEvent('esx:removePickup', function(value)
+    TriggerEvent('esx:removePickup', value.pickupId)
+end)
+
+ESX.RegisterSafeEvent('esx:freezePlayer', function(value)
+    TriggerEvent('esx:freezePlayer', value.state)
+end)
+
+ESX.RegisterSafeEvent('esx:killPlayer', function(_)
+    TriggerEvent('esx:killPlayer')
+end)
+
+RegisterNetEvent('esx:tpm', function()
+    local GetEntityCoords = GetEntityCoords
+    local GetGroundZFor_3dCoord = GetGroundZFor_3dCoord
+    local GetFirstBlipInfoId = GetFirstBlipInfoId
+    local DoesBlipExist = DoesBlipExist
+    local DoScreenFadeOut = DoScreenFadeOut
+    local GetBlipInfoIdCoord = GetBlipInfoIdCoord
+    local GetVehiclePedIsIn = GetVehiclePedIsIn
+
+    ESX.TriggerServerCallback('esx:isUserAdmin', function(admin)
+        if not admin then return end
+
+        local blipMarker = GetFirstBlipInfoId(8)
+        if not DoesBlipExist(blipMarker) then
+            ESX.ShowNotification(locale('tpm_no_waypoint'), 'error')
+            return 'marker'
+        end
+
+        DoScreenFadeOut(650)
+        while not IsScreenFadedOut() do
+            Citizen.Wait(0)
+        end
+
+        local ped, coords = ESX.PlayerData.ped, GetBlipInfoIdCoord(blipMarker)
+        local vehicle = GetVehiclePedIsIn(ped, false)
+        local oldCoords = GetEntityCoords(ped)
+
+        local x, y, groundZ, Z_START = coords['x'], coords['y'], 850.0, 950.0
+        local found = false
+        FreezeEntityPosition(vehicle > 0 and vehicle or ped, true)
+
+        for i = Z_START, 0, -25.0 do
+            local z = i
+            if (i % 2) ~= 0 then
+                z = Z_START - i
+            end
+
+            NewLoadSceneStart(x, y, z, x, y, z, 50.0, 0)
+            local curTime = GetGameTimer()
+            while IsNetworkLoadingScene() do
+                if GetGameTimer() - curTime > 1000 then
+                    break
+                end
+                Citizen.Wait(0)
+            end
+            NewLoadSceneStop()
+            SetPedCoordsKeepVehicle(ped, x, y, z)
+
+            while not HasCollisionLoadedAroundEntity(ped) do
+                RequestCollisionAtCoord(x, y, z)
+                if GetGameTimer() - curTime > 1000 then
+                    break
+                end
+                Citizen.Wait(0)
+            end
+
+            found, groundZ = GetGroundZFor_3dCoord(x, y, z, false)
+            if found then
+                Citizen.Wait(0)
+                SetPedCoordsKeepVehicle(ped, x, y, groundZ)
+                break
+            end
+            Citizen.Wait(0)
+        end
+
+        DoScreenFadeIn(650)
+        FreezeEntityPosition(vehicle > 0 and vehicle or ped, false)
+
+        if not found then
+            SetPedCoordsKeepVehicle(ped, oldCoords['x'], oldCoords['y'], oldCoords['z'] - 1.0)
+            ESX.ShowNotification(locale('tpm_success'), 'success')
+        end
+
+        SetPedCoordsKeepVehicle(ped, x, y, groundZ)
+        ESX.ShowNotification(locale('tpm_success'), 'success')
+    end)
+end)
+
+AddStateBagChangeHandler('initVehicle', '', function(bagName, key, value, _, _)
+    if not value then return end
+
+    local entity = ESX.OneSync.GetEntityFromStateBag(bagName)
+
+    if not entity then return end
+
+    if NetworkGetEntityOwner(entity) ~= cache.playerId then return end
+
+    SetVehicleOnGroundProperly(entity)
+    SetVehicleNeedsToBeHotwired(entity, false)
+    SetVehRadioStation(entity, 'OFF')
+
+    Entity(entity).state:set(key, nil, true)
+end)
+
+AddStateBagChangeHandler('vehicleProperties', '', function(bagName, key, value, _, _)
+    if not value then return end
+
+    local entity = ESX.OneSync.GetEntityFromStateBag(bagName)
+
+    if not entity then return end
+
+    if NetworkGetEntityOwner(entity) ~= cache.playerId then return end
+
+    if not ESX.Game.SetVehicleProperties(entity, value) then return end
+
+    Entity(entity).state:set(key, nil, true)
+end)
